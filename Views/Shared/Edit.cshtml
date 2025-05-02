@@ -1,0 +1,162 @@
+@model VacationManager.Models.Vacation
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Edit Vacation</title>
+
+    <!--  jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!--  jQuery UI -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+    <!--  Timepicker Addon -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.css" />
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui-timepicker-addon/1.6.3/jquery-ui-timepicker-addon.min.js"></script>
+
+    <!--  Validation -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+</head>
+
+<body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <div
+        style="background-color: white; padding: 2rem; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); width: 400px;">
+        <h2 style="text-align:center;">Edit Vacation</h2>
+
+        <form asp-action="Edit" asp-controller="VacationForm" method="post">
+            <input type="hidden" asp-for="Id" />
+
+            <label for="description">Description</label>
+            <input asp-for="Description" id="description" required
+                style="width:100%; padding: 0.5rem; margin-bottom: 1rem;" />
+            <label for="FromDate">From Date</label>
+            <input asp-for="FromDate" id="from" type="text" value="@Model.FromDate.ToString("yyyy-MM-dd")"
+                style="width:100%; padding: 0.5rem; margin-bottom: 1rem;" required />
+
+            <input asp-for="ToDate" id="to" type="text" value="@Model.ToDate.ToString("yyyy-MM-dd")"
+                style="width:100%; padding: 0.5rem; margin-bottom: 1rem;" required />
+
+
+            <label for="DurationDays">Duration (days)</label>
+            <input asp-for="DurationDays" id="DurationDays" readonly
+                style="width:100%; padding: 0.5rem; margin-bottom: 1rem;" />
+
+            <label>
+                <input type="checkbox" id="enableTime" />
+                Select specific time
+            </label>
+
+            <button type="submit"
+                style="width:100%; padding: 0.75rem; background:#007BFF; color:white; border:none; border-radius:5px;">
+                Save Changes
+            </button>
+        </form>
+    </div>
+
+    <script>
+        $(function () {
+
+            // Save initial values
+            const originalFrom = $("#from").val();
+            const originalTo = $("#to").val();
+
+            $("#from-original").text("Originally: " + originalFrom);
+            $("#to-original").text("Originally: " + originalTo);
+
+            // Hide original dates when edited
+            $("#from").on("focus", function () {
+                $("#from-original").hide();
+            });
+
+            $("#to").on("focus", function () {
+                $("#to-original").hide();
+            });
+            const dateOnly = { dateFormat: 'yy-mm-dd' };
+            const dateTime = {
+                dateFormat: 'yy-mm-dd',
+                timeFormat: 'HH:mm',
+                controlType: 'select',
+                oneLine: true
+            };
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Initialize with dateOnly
+            $("#from").datepicker({
+                ...dateOnly,
+                minDate: today,
+                onSelect: function () {
+                    const fromDate = $(this).datepicker('getDate');
+                    $("#to").datepicker("option", "minDate", fromDate);
+                    calculateDuration();
+                }
+            });
+
+            $("#to").datepicker({
+                ...dateOnly,
+                minDate: today,
+                onSelect: function () {
+                    calculateDuration();
+                }
+            });
+
+            // Duration calculation
+            function calculateDuration() {
+                const from = $("#from").datepicker("getDate");
+                const to = $("#to").datepicker("getDate");
+
+                if (from && to && to >= from) {
+                    const diff = Math.floor((to - from) / (1000 * 60 * 60 * 24));
+                    $("#DurationDays").val(diff);
+                } else {
+                    $("#DurationDays").val('');
+                }
+            }
+
+            // Toggle time picker
+            function toggleTimePicker() {
+                $("#from, #to").datepicker("destroy").datetimepicker("destroy");
+
+                if ($("#enableTime").is(":checked")) {
+                    $("#from, #to").datetimepicker(dateTime);
+                } else {
+                    $("#from, #to").datepicker(dateOnly);
+                }
+
+                // Re-apply minDate & sync
+                $("#from").datepicker("option", "minDate", today);
+                $("#to").datepicker("option", "minDate", $("#from").datepicker("getDate"));
+            }
+
+            // Validate "To" > "From"
+            $.validator.addMethod("greaterThanFrom", function (value, element) {
+                const from = $("#from").datepicker("getDate");
+                const to = $("#to").datepicker("getDate");
+                return !from || !to || to >= from;
+            }, "To Date must be after or equal to From Date.");
+
+            $("#to").attr("data-rule-greaterThanFrom", "true");
+
+            // Bindings
+            $("#from, #to").on("change", calculateDuration);
+            $("#enableTime").on("change", toggleTimePicker);
+            $("form").validate();
+
+            // Initial setup
+            toggleTimePicker();
+            calculateDuration();
+        });
+    </script>
+</body>
+
+</html>

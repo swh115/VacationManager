@@ -1,0 +1,164 @@
+﻿@{
+    ViewData["Title"] = "Home";
+    Layout = null;
+}
+@if (ViewBag.Message != null)
+{
+    <p style="color: red; margin-bottom: 1rem;">@ViewBag.Message</p>
+}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>My Vacations</title>
+    <!-- jQuery UI Theme (needed for pager icons to show properly) -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" />
+
+
+    <!-- jqGrid CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/free-jqgrid@4.15.5/css/ui.jqgrid.min.css" />
+
+    <!-- jQuery already included -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- jQuery UI (required for jqGrid) -->
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+    <!-- jqGrid JS -->
+    <script src="https://cdn.jsdelivr.net/npm/free-jqgrid@4.15.5/js/jquery.jqgrid.min.js"></script>
+
+
+</head>
+
+<body style="margin-top: 5%; width: 100%; height: 100vh; font-family: sans-serif;">
+    <h2 style="text-align:center;">Welcome, @User.Identity.Name!</h2>
+
+    <div style="text-align: right; max-width: 900px; margin: 0 auto 1rem;">
+        <form asp-controller="Account" asp-action="Logout" method="post">
+            <button type="submit"
+                style="padding: 6px 12px; background-color: #dc3545; color: white; border: none; border-radius: 5px;">
+                Log Out
+            </button>
+        </form>
+    </div>
+
+    <div style="width: 95%; max-width: 1600px; margin: auto;">
+
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <a href="/VacationForm/Add" class="btn"
+                style="padding: 10px 20px; background-color: #007BFF; color: white; border-radius: 6px; text-decoration: none;">
+                + Add Vacation
+            </a>
+        </div>
+
+        <!-- jqGrid container -->
+        <div style="width: 100%; max-width: 1200px; height: 100%; margin: auto;">
+            <table id="vacationTable"></table>
+            <div id="pager"></div>
+        </div>
+
+    </div>
+</body>
+
+<script>
+    $(function () {
+
+        function getRowsThatFit() {
+            const rowHeight = 38; // Adjusted for better spacing
+            const availableHeight = $(window).height() - 300;
+            return Math.floor(availableHeight / rowHeight);
+        }
+
+        function isMidnight(date) {
+            return date.getHours() === 0 && date.getMinutes() === 0;
+        }
+
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function formatDateTime(date) {
+            const y = date.getFullYear();
+            const m = ('0' + (date.getMonth() + 1)).slice(-2);
+            const d = ('0' + date.getDate()).slice(-2);
+            const h = ('0' + date.getHours()).slice(-2);
+            const min = ('0' + date.getMinutes()).slice(-2);
+            return `${y}-${m}-${d} ${h}:${min}`;
+        }
+
+        $("#vacationTable").jqGrid({
+            url: '/api/vacations/my',
+            datatype: 'json',
+            colModel: [
+                { name: 'description', label: 'Description', width: 150 },
+                {
+                    name: 'fromDate',
+                    label: 'Date From',
+                    width: 150,
+                    formatter: function (cellValue) {
+                        const date = new Date(cellValue);
+                        return isMidnight(date) ? formatDate(date) : formatDateTime(date);
+                    }
+                },
+                {
+                    name: 'toDate',
+                    label: 'Date To',
+                    width: 150,
+                    formatter: function (cellValue) {
+                        const date = new Date(cellValue);
+                        return isMidnight(date) ? formatDate(date) : formatDateTime(date);
+                    }
+                },
+                { name: 'durationDays', label: 'Duration (days)', width: 120 },
+                {
+                    name: 'actions',
+                    label: 'Actions',
+                    width: 130,
+                    formatter: function (cellValue, options, rowObject) {
+                        const fromDate = new Date(rowObject.fromDate);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return fromDate > today
+                            ? `<a href="/VacationForm/Edit/${rowObject.id}" class="btn btn-warning btn-sm">Edit</a>`
+                            : `<button class="btn btn-secondary btn-sm" disabled>Edit</button>`;
+                    }
+                }
+            ],
+            pager: "#pager",
+            rowNum: getRowsThatFit(),
+            rowList: [5, 10, 20, 50, 100],
+            viewrecords: true,
+            height: $(window).height() * 0.6,
+            autowidth: true,
+            shrinkToFit: true,
+
+            gridComplete: function () {
+                $(".ui-jqgrid").css("font-size", "18px");
+                $(".ui-jqgrid-labels").css({
+                    "font-size": "16px",
+                    "font-weight": "bold"
+                });
+                $(".ui-jqgrid .ui-jqgrid-btable tr").css({
+                    "height": "40px"
+                });
+                $(".ui-jqgrid .ui-jqgrid-labels, .ui-jqgrid .ui-jqgrid-btable").css("line-height", "1.6");
+            }
+        });
+
+        $(window).on("resize", function () {
+            const grid = $("#vacationTable");
+            const newWidth = grid.closest("div").width();
+            const newHeight = $(window).height() * 0.6;
+            grid.jqGrid("setGridWidth", newWidth, true);
+            grid.jqGrid("setGridHeight", newHeight);
+        }).trigger("resize");
+
+    });
+</script>
+
+
+
+
+</html>
