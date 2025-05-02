@@ -1,0 +1,73 @@
+# Build results
+bin/
+obj/
+out/
+artifacts/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS-generated files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# VS Code settings
+.vscode/
+.history/
+
+# Dotnet stuff
+project.lock.json
+project.fragment.lock.json
+*.db
+*.db-shm
+*.db-wal
+
+# ASP.NET-specific folders
+wwwroot/lib/
+wwwroot/node_modules/
+
+# Rider
+.idea/
+*.sln.iml
+
+# Logs
+*.log
+
+# NuGet Packages
+*.nupkg
+# The packages folder can be ignored because of Package Restore
+**/packages/*
+!**/packages/build/
+!**/packages/repositories.config
+
+# Publish folder
+publish/
+dist/
+
+# Coverage reports
+coverage/
+TestResults/
+*.coverage
+*.coveragexml
+*.trx
+
+# Secrets and configs
+secrets.json
+appsettings.Development.json
+.env
+.env.local
+
+# JetBrains Rider
+.idea/
+
+# Mac crash reports
+*.crash
+
+# npm & yarn stuff (if used for frontend)
+node_modules/
+package-lock.json
+yarn.lock
